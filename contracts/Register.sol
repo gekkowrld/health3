@@ -6,9 +6,7 @@ contract Register {
     // Struct for storing patient information
     struct Patient {
         string name;
-        string image; // base64 encoded image
         string dob;   // date of birth in dd/mm/yyyy format
-        string phoneNumber;
     }
 
     // Struct for storing doctor information
@@ -47,16 +45,12 @@ contract Register {
     // Function to register a patient
     function registerPatient(
         string memory _name,
-        string memory _image,
-        string memory _dob,
-        string memory _phoneNumber
+        string memory _dob
     ) public {
         // Register patient
         patients[msg.sender] = Patient({
             name: _name,
-            image: _image,
-            dob: _dob,
-            phoneNumber: _phoneNumber
+            dob: _dob
         });
 
         emit PatientRegistered(msg.sender);
@@ -92,12 +86,10 @@ contract Register {
     // Function to fetch the patient details by address
     function getPatient(address _patientAddress) public view returns (
         string memory name,
-        string memory image,
-        string memory dob,
-        string memory phoneNumber
+        string memory dob
     ) {
         Patient memory patient = patients[_patientAddress];
-        return (patient.name, patient.image, patient.dob, patient.phoneNumber);
+        return (patient.name,  patient.dob);
     }
 
     // Function to fetch the doctor details by address

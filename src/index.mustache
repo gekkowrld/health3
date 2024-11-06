@@ -7,17 +7,23 @@
 	<title>Communication Portal</title>
 </head>
 <body>
-{{#is_loggedin}}
-Welcome address {{address}}
-{{/is_loggedin}}
-{{^is_loggedin}}
-Login
-<a href="/doctor_login">Doctor</a> or <a href="/patient_login">Patient</a>
-<br>
-<br>
-Register
-<a href="/doctor_register">Doctor</a> or <a href="/patient_register">Patient</a>
-{{/is_loggedin}}
-</form>
+	{{#is_loggedin}}
+
+	<p>To join a communication, share @{{username}} to get started!</p>
+
+	<p>To start a new communication, enter the username here:</p>
+
+	<br>
+	<form method="GET" action="/chat">
+		<label for="username">username: </label>
+		<input type="text" name="username" id="username">
+	</form>
+	{{/is_loggedin}}
+	{{^is_loggedin}}
+
+	<h2>Register</h2>
+	<a href="/doctor_register">Doctor</a> or <a href="/patient_register">Patient</a>
+	{{/is_loggedin}}
+	</form>
 </body>
 </html>

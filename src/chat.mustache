@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="shortcut icon" type="image/x-icon" href="/resources/favicon.png">
+    <title>Communicate with @{{to}}</title>
+</head>
+<body>
+<h1>You are now in communication with @{{to}} as @{{from}}</h1>
+
+<div>
+    <p><strong>Chat with {{to}}</strong></p>
+    <p><strong>Total Messages:</strong> {{total_messages}}</p>
+    <ul id="message-list">
+        {{#previous_messages}}
+            <li><strong>From: {{from_username}} To: {{to_username}}<br></strong> {{content}} <small>({{timestamp}})</small></li>
+        {{/previous_messages}}
+    </ul>
+</div>
+
+<!-- Form to send new messages -->
+<form id="chat-form" method="POST">
+    <input type="text" id="message" name="message" required placeholder="Type your message" />
+    <button type="submit">Send</button>
+</form>
+
+<!-- Error message if any -->
+{{#error}}
+    <p style="color: red;">{{error}}</p>
+{{/error}}
+
+<!-- JavaScript for automatic refresh and dynamic form submission -->
+<script>
+    // Function to reload the messages asynchronously without full page reload
+    async function refreshMessages() {
+        const response = await fetch(window.location.href);
+        const data = await response.text();
+        document.body.innerHTML = data; // This will replace the current HTML with the updated content
+    }
+
+    // Attach form submit event to send the message dynamically
+    const form = document.getElementById("chat-form");
+    form.onsubmit = async (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+        const message = formData.get("message").trim();
+
+        if (message === "") {
+            alert("Message cannot be empty or just spaces.");
+            return;
+        }
+
+        // Submit the message via fetch to update the content dynamically
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.text();
+        document.body.innerHTML = result; // Replace the content with the new result
+    };
+
+    // Set up auto-refresh every 30 seconds
+//    setInterval(refreshMessages, 1000); // Refresh every 30 seconds
+</script>
+
+</body>
+</html>
+

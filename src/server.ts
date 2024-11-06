@@ -3,13 +3,16 @@ import path = require("path");
 import { IndexPage } from "./index";
 import { CookieUtils } from "./auth";
 import { NotFound } from "./notFound";
-import { docForm, regForm } from "./register";
+import { docForm, patientForm, regForm } from "./register";
 import jwt from "jsonwebtoken";
+import { Chat } from "./chat";
 
 export async function Page(
 	web3: any,
-	abiPath: string,
-	deployedAddress: string,
+	regAbiPath: string,
+	msgAbiPath: string,
+	regDeployedAddress: string,
+	msgDeployedAddress: string,
 	request: Request,
 ): Promise<Response> {
 	const page = new URL(request.url).pathname;
@@ -23,7 +26,8 @@ export async function Page(
 	let is_loggedin: boolean = false;
 
 	// This means an auth token is there, still exclude the reg pages
-	if (verifyJWT(authToken || "")) {
+	const vjwt = verifyJWT(authToken || "");
+	if (vjwt) {
 		is_loggedin = true;
 	}
 
@@ -38,7 +42,7 @@ export async function Page(
 
 	switch (page) {
 		case "/":
-			const val = IndexPage(openFile("index.mustache"), is_loggedin);
+			const val = IndexPage(openFile("index.mustache"), vjwt, is_loggedin);
 			pageContent = val[0];
 			status = val[1];
 			return new Response(pageContent, {
@@ -52,12 +56,31 @@ export async function Page(
 				status: 200,
 			});
 
-		//case "/doctor_login":
+		case "/patient_register":
+			return new Response(regForm(false, openFile("register.mustache")), {
+				headers: { "Content-Type": "text/html" },
+				status: 200,
+			});
+
+		case "/patient_register_info":
+			const [pr, gr] = await patientForm(
+				web3,
+				regAbiPath,
+				regDeployedAddress,
+				openFile("register.mustache"),
+				request,
+			);
+
+			return new Response(pr, {
+				headers: { "Content-Type": "text/html", gr },
+				status: 201,
+			});
+
 		case "/doctor_register_info":
 			const [pg, gt] = await docForm(
 				web3,
-				abiPath,
-				deployedAddress,
+				regAbiPath,
+				regDeployedAddress,
 				openFile("register.mustache"),
 				request,
 			);
@@ -65,6 +88,24 @@ export async function Page(
 				headers: { "Content-Type": "text/html", gt },
 				status: 201,
 			});
+
+		case "/chat":
+			if (is_loggedin) {
+				return new Response(
+					await Chat(
+						web3,
+						msgAbiPath,
+						msgDeployedAddress,
+						openFile("chat.mustache"),
+						vjwt.userId,
+						request,
+					),
+					{
+						headers: { "Content-Type": "text/html" },
+						status: 200,
+					},
+				);
+			}
 
 		default:
 			return new Response(NotFound(openFile("notFound.mustache")), {

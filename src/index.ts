@@ -2,14 +2,21 @@ import Mustache from "mustache";
 
 export function IndexPage(
 	templateString: string,
+	jwt_auth: any,
 	is_loggedin: boolean,
 ): [string, number] {
 	let index: string = "";
 	let status: number = 200;
+	let username: string = "";
+
+	try {
+		const userId = jwt_auth.userId || "";
+		username = userId;
+	} catch (_) {}
 
 	const data = {
 		is_loggedin: is_loggedin,
-		address: "0xFABB0ac9d68B0B445fB7357272Ff202C5651694a",
+		username,
 	};
 
 	index = Mustache.render(templateString, data);

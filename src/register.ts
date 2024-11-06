@@ -1,21 +1,37 @@
 import fs = require("fs");
 import jwt from "jsonwebtoken";
 import Mustache from "mustache";
-import { title } from "process";
 
-export const PatientRegistrationForm = `
-  <html>
-    <head>
-      <title>Patient Register</title>
-    </head>
-    <body>
-<form method="POST" action="/patient_register_info">
-<label for"address">Address: </label>
-<input type="text" id="address" name="address" required/><br><br>
-</form>
-	</body>
-	</html>
-`;
+export async function RegisterPatient(
+	web3: any,
+	abiPath: string,
+	deployedAddress: string,
+	patientAccount: string,
+	name: string,
+	dob: string,
+) {
+	const deployedContent = fs.readFileSync(deployedAddress, "utf8");
+
+	const abi = require(abiPath);
+	const registerDoc = new web3.eth.Contract(abi, deployedContent);
+	registerDoc.handleRevert = true;
+
+	const accounts = await web3.eth.getAccounts();
+	const defaultAccount = accounts[0];
+
+	try {
+		await registerDoc.methods.registerPatient(name, dob).send({
+			from: defaultAccount,
+			gas: 1000000,
+			gasPrice: "10000000000",
+		});
+
+		//const info = await registerDoc.methods.getPatient(patientAccount).call();
+		//console.log("Patient Registration Successful! Patient Info:\n", info);
+	} catch (error) {
+		console.error(error);
+	}
+}
 
 export async function RegisterDoctor(
 	web3: any,
@@ -125,7 +141,7 @@ export async function docForm(
 		is_register: false,
 		message: "Signed in succcess",
 		is_cookie: true,
-		token: `"_user_loggedin=${token}; Path=/; HttpOnly; Secure; SameSite=Strict"`,
+		token: `"_user_loggedin=${token}; Path=/; Secure; SameSite=Strict"`,
 		username: username,
 	};
 
@@ -133,7 +149,49 @@ export async function docForm(
 
 	return [
 		page,
-		'"Set-Cookie": `_user_loggedin=${token}; Path=/; HttpOnly; Secure; SameSite=Strict`',
+		'"Set-Cookie": `_user_loggedin=${token}; Path=/; Secure; SameSite=Strict`',
+	];
+}
+
+export async function patientForm(
+	web3: any,
+	abiPath: string,
+	deployedAddress: string,
+	templateString: string,
+	req: Request,
+): Promise<[string, string]> {
+	const formData = await req.formData();
+	const name: string = formData.get("name")?.toString() || "";
+	const patientAccount: string = formData.get("address")?.toString() || "";
+	const dob: string = formData.get("dob")?.toString() || "";
+	const address: string = formData.get("address")?.toString() || "";
+
+	console.log("Received Patient Registration Details:", {
+		name,
+		patientAccount,
+		dob,
+	});
+
+	RegisterPatient(web3, abiPath, deployedAddress, patientAccount, name, dob);
+
+	const username: string = generateUsername(name);
+	const token = generateJWT(username);
+
+	const data = {
+		is_doctor: false,
+		title: "Signed in!",
+		is_register: false,
+		message: `Patient registered successfully, use ${username} for public use`,
+		is_cookie: true,
+		token: `"_user_loggedin=${token}; Path=/; Secure; SameSite=Strict"`,
+		username: username,
+	};
+
+	const page: string = Mustache.render(templateString, data);
+
+	return [
+		page,
+		'"Set-Cookie": `_user_loggedin=${token}; Path=/; Secure; SameSite=Strict`',
 	];
 }
 

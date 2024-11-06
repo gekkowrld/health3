@@ -56,7 +56,7 @@ async function deploy(
 	abiPath: string,
 	bytecodePath: string,
 	contractName: string,
-) {
+): Promise<[string]> {
 	const bytecode = fs.readFileSync(bytecodePath, "utf8");
 	const abi = require(abiPath);
 	const myContract = new web3.eth.Contract(abi);
@@ -95,18 +95,22 @@ async function deploy(
 	} catch (error) {
 		console.error("Deployment error:", error);
 	}
+
+	return [""];
 }
 
 // Set up the server and routing using bunjs
 async function server(
 	web3: any,
-	deployedAddress: string,
-	abiPath: string,
+	regPath: string,
+	msgPath: string,
+	regAbiPath: string,
+	msgAbiPath: string,
 ): Promise<void> {
 	const __server = serve({
 		port: 3000,
 		async fetch(req) {
-			return await Page(web3, abiPath, deployedAddress, req);
+			return await Page(web3, regAbiPath, msgAbiPath, regPath, msgPath, req);
 		},
 	});
 
@@ -115,17 +119,33 @@ async function server(
 
 // Main function to deploy and interact with the contract
 async function main() {
-	const contractName = "Register";
-	const paths = await compileContract(contractName);
-	const abiPath = paths[0];
-	const bytecodePath = paths[1];
+	const Register = "Register";
+	console.log("Compiling: ", Register);
+
+	const regPath = await compileContract(Register);
+	const regAbiPath = regPath[0];
+	const regBytecodePath = regPath[1];
+
+	const Messaging = "Messaging";
+	console.log("Compiling: ", Messaging);
+
+	const msgPath = await compileContract(Messaging);
+	const msgAbiPath = msgPath[0];
+	const msgBytecodePath = msgPath[1];
 
 	const web3 = new Web3("http://127.0.0.1:8545/");
+	console.log("Started a new web3 instance\n");
 
-	const values = await deploy(web3, abiPath, bytecodePath, contractName);
-	const deployedAddressPath = values[0];
+	console.log("Deploying: ", Register);
+	const values = await deploy(web3, regAbiPath, regBytecodePath, Register);
+	const regAddress: string = values[0];
 
-	await server(web3, deployedAddressPath, abiPath);
+	console.log("Deploying: ", Messaging);
+	const mVal = await deploy(web3, msgAbiPath, msgBytecodePath, Messaging);
+	const msgAddress: string = mVal[0];
+
+	console.log("Finished Deploying, starting the server.\n");
+	await server(web3, regAddress, msgAddress, regAbiPath, msgAbiPath);
 }
 
 main();
