@@ -9,6 +9,10 @@ The project utilizes:
 - Chai for assertions
 - web3.js for interacting with Ethereum
 
+## Resources
+
+<https://docs.web3js.org/guides/smart_contracts/smart_contracts_guide>
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/en/download/) (latest version)

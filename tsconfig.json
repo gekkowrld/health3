@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "es2020",
 		"module": "commonJs",
-    "moduleResolution": "node",
+		"moduleResolution": "node",
 		"esModuleInterop": true,
 		"forceConsistentCasingInFileNames": true,
 		"strict": true,

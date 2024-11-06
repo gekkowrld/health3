@@ -3,8 +3,7 @@ import path = require("path");
 import fs = require("fs");
 import { Web3 } from "web3";
 import { serve } from "bun";
-import { registerFormHTML, RegisterDoctor } from "./src/register";
-import { notFound } from "./src/notFound";
+import { Page } from "./src/server";
 
 // Compile contract and save ABI and Bytecode
 async function compileContract(contractName: string) {
@@ -99,74 +98,19 @@ async function deploy(
 }
 
 // Set up the server and routing using bunjs
-function server(web3: any, deployedAddress: string, abiPath: string) {
-	const server = serve({
+async function server(
+	web3: any,
+	deployedAddress: string,
+	abiPath: string,
+): Promise<void> {
+	const __server = serve({
 		port: 3000,
 		async fetch(req) {
-			const url = new URL(req.url);
-			switch (url.pathname) {
-				case "/":
-					return new Response("Home", {
-						headers: { "Content-Type": "text/html" },
-					});
-				case "/register":
-					return new Response(registerFormHTML, {
-						headers: { "Content-Type": "text/html" },
-					});
-				case "/register-doc":
-					const formData = await req.formData();
-					const name = formData.get("name");
-					const username = generateUsername(name);
-					const phone = formData.get("phone");
-					const dob = formData.get("dob");
-                    const email = formData.get("email");
-                    const title = formData.get("title");
-                    const education = formData.get("education");
-
-					console.log("Received Registration Details:", {
-						name,
-						username,
-						phone,
-						dob,
-					});
-
-                    RegisterDoctor(web3,abiPath,deployedAddress, username, name, phone,dob,"??",email,education,title);
-
-					return new Response(
-						"Registration successful! Thank you for signing up.",
-					);
-				default:
-					return new Response(notFound, {
-						headers: { "Content-Type": "text/html" },
-						status: 404,
-					});
-			}
+			return await Page(web3, abiPath, deployedAddress, req);
 		},
 	});
 
-	console.log(`Listening on localhost:${server.port}`);
-}
-
-function generateUsername(name: string) {
-	// split the name using spaces
-	const names = name.split(" ");
-	let username = "";
-
-	if (names.length == 0) {
-		return names[0].toLowerCase();
-	}
-
-	for (let i = 0; i < names.length; i++) {
-		// Pick the first letter only (may not be unicode friendly)
-		if (i == 0) {
-			username += name[i][0];
-			continue;
-		}
-
-		username += names[i].toLowerCase();
-	}
-
-	return username;
+	console.log(`Listening on localhost:${__server.port}`);
 }
 
 // Main function to deploy and interact with the contract
@@ -181,7 +125,7 @@ async function main() {
 	const values = await deploy(web3, abiPath, bytecodePath, contractName);
 	const deployedAddressPath = values[0];
 
-	server(web3, deployedAddressPath, abiPath);
+	await server(web3, deployedAddressPath, abiPath);
 }
 
 main();

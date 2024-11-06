@@ -10,8 +10,9 @@
 		"compile": "bunx hardhat compile",
 		"test": "bunx hardhat test",
 		"node": "bunx hardhat node",
-		"format": "bunx biome format --write **/*.ts **/*.json",
-		"lint": "bunx biome lint --write **/*.ts **/*.json"
+		"format": "bunx biome format --write *.ts *.json **/*.ts **/*.json",
+		"lint": "bunx biome lint --write *.ts *.json **/*.ts **/*.json",
+		"serve": "bun run index.ts"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "1.9.4",
@@ -35,7 +36,11 @@
 		"web3": "4"
 	},
 	"dependencies": {
+		"@types/jsonwebtoken": "^9.0.7",
+		"@types/mustache": "^4.2.5",
 		"ethers": "^6.13.4",
+		"jsonwebtoken": "^9.0.2",
+		"mustache": "^4.2.0",
 		"solc": "^0.8.0"
 	}
 }
